@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="sk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Battleship Game</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #fff;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .config-section,
+      .game-section {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+      }
+
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+      }
+
+      input,
+      select {
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      button {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.2s, box-shadow 0.2s;
+        margin-top: 10px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .boards-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .board-wrapper {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 12px;
+      }
+
+      .board-title {
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 20px;
+        font-weight: bold;
+      }
+
+      .board {
+        display: grid;
+        gap: 2px;
+        background: #2a2a2a;
+        padding: 5px;
+        border-radius: 8px;
+        margin: 0 auto;
+        width: fit-content;
+      }
+
+      .cell {
+        width: 40px;
+        height: 40px;
+        background: #4a90e2;
+        border: 1px solid #357abd;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+
+      .cell:hover {
+        background: #5ba3ff;
+        transform: scale(1.1);
+      }
+
+      .cell.ship {
+        background: #2ecc71;
+      }
+
+      .cell.hit {
+        background: #e74c3c;
+      }
+
+      .cell.hit::after {
+        content: "💥";
+      }
+
+      .cell.miss {
+        background: #95a5a6;
+      }
+
+      .cell.miss::after {
+        content: "○";
+        color: white;
+      }
+
+      .cell.selected {
+        background: #f39c12;
+        border: 2px solid #e67e22;
+      }
+
+      .info-panel {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 15px;
+      }
+
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .info-item:last-child {
+        border-bottom: none;
+      }
+
+      .achievements {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .achievement {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        color: #333;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: bold;
+        text-align: center;
+        animation: slideIn 0.5s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(-20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .spells {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+      }
+
+      .spell-btn {
+        flex: 1;
+        min-width: 150px;
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #333;
+        padding: 15px;
+        border-radius: 10px;
+        font-weight: bold;
+        transition: all 0.3s;
+      }
+
+      .spell-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+      }
+
+      .spell-btn.active {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        box-shadow: 0 0 20px rgba(255, 154, 158, 0.6);
+      }
+
+      .status {
+        text-align: center;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        margin: 20px 0;
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        color: #333;
+        padding: 30px;
+        border-radius: 15px;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+      }
+
+      .modal-content h2 {
+        margin-bottom: 20px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .boards-container {
+          grid-template-columns: 1fr;
+        }
+
+        .cell {
+          width: 30px;
+          height: 30px;
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>⚓ Battleship Game</h1>
+
+      <!-- Konfigurácia -->
+      <div id="configSection" class="config-section">
+        <h2>Nastavenie hry</h2>
+        <div class="form-group">
+          <label>API URL:</label>
+          <input
+            type="text"
+            id="apiUrl"
+            value="http://localhost:8000"
+            placeholder="http://localhost:8000"
+          />
+        </div>
+        <div class="form-group">
+          <label>Veľkosť hracieho poľa:</label>
+          <select id="boardSize">
+            <option value="8">8x8</option>
+            <option value="10" selected>10x10</option>
+            <option value="12">12x12</option>
+            <option value="15">15x15</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tvoje meno:</label>
+          <input
+            type="text"
+            id="playerName"
+            placeholder="Zadaj svoje meno"
+            value="Hráč 1"
+          />
+        </div>
+        <button onclick="createAndJoinGame()">🎮 Vytvoriť hru</button>
+      </div>
+
+      <!-- Umiestnenie lodí -->
+      <div id="setupSection" class="game-section hidden">
+        <h2>Umiestni svoje lode</h2>
+        <div class="form-group">
+          <label>Názov lode:</label>
+          <input
+            type="text"
+            id="shipName"
+            placeholder="napr. Torpédoborec"
+            value="Loď 1"
+          />
+        </div>
+        <p style="margin: 10px 0">
+          Klikaj na bunky pre vybratie pozícií lode. Potom klikni "Umiestniť
+          loď".
+        </p>
+        <div class="board-wrapper">
+          <div id="setupBoard" class="board"></div>
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 10px">
+          <button
+            onclick="clearSelection()"
+            style="flex: 1; background: #e74c3c"
+          >
+            Vymazať výber
+          </button>
+          <button onclick="placeShip()" style="flex: 2">
+            ⚓ Umiestniť loď
+          </button>
+        </div>
+        <div class="info-panel">
+          <div class="info-item">
+            <span>Umiestnené lode:</span>
+            <span id="shipsCount">0</span>
+          </div>
+        </div>
+        <button
+          onclick="setReady()"
+          style="background: #27ae60; margin-top: 15px"
+        >
+          ✓ Som pripravený!
+        </button>
+      </div>
+
+      <!-- Hra -->
+      <div id="gameSection" class="game-section hidden">
+        <div class="status" id="gameStatus">Čakanie na protihráča...</div>
+
+        <div class="boards-container">
+          <!-- Moja plocha -->
+          <div class="board-wrapper">
+            <div class="board-title">🛡️ Tvoja plocha</div>
+            <div id="myBoard" class="board"></div>
+            <div class="info-panel">
+              <div class="info-item">
+                <span>Tvoje lode:</span>
+                <span id="myShipsAlive">0</span>
+              </div>
+              <div class="info-item">
+                <span>Série zásahov:</span>
+                <span id="consecutiveHits">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Protivníkova plocha -->
+          <div class="board-wrapper">
+            <div class="board-title">🎯 Protivníkova plocha</div>
+            <div id="enemyBoard" class="board"></div>
+            <div class="spells">
+              <button class="spell-btn" onclick="selectSpell('nuke')">
+                💣 Nuke (3x3)
+              </button>
+              <button class="spell-btn" onclick="selectSpell('sonar')">
+                📡 Sonar (5x5)
+              </button>
+              <button class="spell-btn" onclick="selectSpell('airstrike')">
+                ✈️ Airstrike
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="achievements" id="achievements"></div>
+      </div>
+
+      <!-- Modal -->
+      <div id="modal" class="modal">
+        <div class="modal-content">
+          <h2 id="modalTitle">Správa</h2>
+          <p id="modalText"></p>
+          <button onclick="closeModal()">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let API_URL = "http://localhost:8000";
+      let gameId = null;
+      let myPlayerId = null;
+      let enemyPlayerId = null;
+      let boardSize = 10;
+      let selectedCells = [];
+      let selectedSpell = null;
+      let myShips = [];
+      let gameData = null;
+
+      function showSection(section) {
+        document.getElementById("configSection").classList.add("hidden");
+        document.getElementById("setupSection").classList.add("hidden");
+        document.getElementById("gameSection").classList.add("hidden");
+        document.getElementById(section).classList.remove("hidden");
+      }
+
+      function showModal(title, text) {
+        document.getElementById("modalTitle").textContent = title;
+        document.getElementById("modalText").textContent = text;
+        document.getElementById("modal").classList.add("show");
+      }
+
+      function closeModal() {
+        document.getElementById("modal").classList.remove("show");
+      }
+
+      async function createAndJoinGame() {
+        API_URL = document.getElementById("apiUrl").value;
+        boardSize = parseInt(document.getElementById("boardSize").value);
+        const playerName = document.getElementById("playerName").value;
+
+        if (!playerName) {
+          showModal("Chyba", "Zadaj svoje meno!");
+          return;
+        }
+
+        try {
+          // Vytvor hru
+          const gameRes = await fetch(`${API_URL}/games`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              config: {
+                board_size: boardSize,
+                max_players: 2,
+                allow_custom_ships: true,
+                initial_spells: ["nuke", "sonar", "airstrike"],
+              },
+            }),
+          });
+          const game = await gameRes.json();
+          gameId = game.id;
+
+          // Pripoj hráča
+          const playerRes = await fetch(`${API_URL}/games/${gameId}/join`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({player_name: playerName}),
+          });
+          const player = await playerRes.json();
+          myPlayerId = player.id;
+
+          // Pripoj AI protivníka
+          const enemyRes = await fetch(`${API_URL}/games/${gameId}/join`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({player_name: "AI Protivník"}),
+          });
+          const enemy = await enemyRes.json();
+          enemyPlayerId = enemy.id;
+
+          // Umiestni lode pre protivníka (náhodne)
+          await placeAIShips();
+
+          showSection("setupSection");
+          createSetupBoard();
+        } catch (error) {
+          showModal("Chyba", "Nedá sa pripojiť k API: " + error.message);
+        }
+      }
+
+      async function placeAIShips() {
+        const ships = [
+          {name: "Torpédoborec", size: 4},
+          {name: "Krížnik", size: 3},
+          {name: "Ponorka", size: 3},
+          {name: "Čln", size: 2},
+        ];
+
+        for (const ship of ships) {
+          let placed = false;
+          while (!placed) {
+            const positions = generateRandomShipPositions(ship.size);
+            try {
+              await fetch(
+                `${API_URL}/games/${gameId}/players/${enemyPlayerId}/ships`,
+                {
+                  method: "POST",
+                  headers: {"Content-Type": "application/json"},
+                  body: JSON.stringify({
+                    ship_name: ship.name,
+                    positions: positions,
+                  }),
+                }
+              );
+              placed = true;
+            } catch (error) {
+              // Skús iné pozície
+            }
+          }
+        }
+
+        // Označ protivníka ako pripravený
+        await fetch(
+          `${API_URL}/games/${gameId}/players/${enemyPlayerId}/ready`,
+          {
+            method: "POST",
+          }
+        );
+      }
+
+      function generateRandomShipPositions(size) {
+        const horizontal = Math.random() > 0.5;
+        const positions = [];
+
+        if (horizontal) {
+          const y = Math.floor(Math.random() * boardSize);
+          const x = Math.floor(Math.random() * (boardSize - size + 1));
+          for (let i = 0; i < size; i++) {
+            positions.push({x: x + i, y: y});
+          }
+        } else {
+          const x = Math.floor(Math.random() * boardSize);
+          const y = Math.floor(Math.random() * (boardSize - size + 1));
+          for (let i = 0; i < size; i++) {
+            positions.push({x: x, y: y + i});
+          }
+        }
+
+        return positions;
+      }
+
+      function createSetupBoard() {
+        const board = document.getElementById("setupBoard");
+        board.style.gridTemplateColumns = `repeat(${boardSize}, 40px)`;
+        board.innerHTML = "";
+
+        for (let y = 0; y < boardSize; y++) {
+          for (let x = 0; x < boardSize; x++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.onclick = () => toggleCell(x, y, cell);
+            board.appendChild(cell);
+          }
+        }
+      }
+
+      function toggleCell(x, y, cell) {
+        const index = selectedCells.findIndex((c) => c.x === x && c.y === y);
+        if (index >= 0) {
+          selectedCells.splice(index, 1);
+          cell.classList.remove("selected");
+        } else {
+          selectedCells.push({x, y});
+          cell.classList.add("selected");
+        }
+      }
+
+      function clearSelection() {
+        selectedCells = [];
+        createSetupBoard();
+      }
+
+      async function placeShip() {
+        if (selectedCells.length === 0) {
+          showModal("Chyba", "Vyber aspoň jednu bunku!");
+          return;
+        }
+
+        const shipName =
+          document.getElementById("shipName").value ||
+          `Loď ${myShips.length + 1}`;
+
+        try {
+          const res = await fetch(
+            `${API_URL}/games/${gameId}/players/${myPlayerId}/ships`,
+            {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({
+                ship_name: shipName,
+                positions: selectedCells,
+              }),
+            }
+          );
+
+          if (res.ok) {
+            myShips.push(selectedCells);
+            document.getElementById("shipsCount").textContent = myShips.length;
+            document.getElementById("shipName").value = `Loď ${
+              myShips.length + 1
+            }`;
+            clearSelection();
+
+            // Zobraz umiestnené lode
+            myShips.forEach((ship) => {
+              ship.forEach((pos) => {
+                const cells = document.getElementById("setupBoard").children;
+                const cell = cells[pos.y * boardSize + pos.x];
+                cell.classList.add("ship");
+              });
+            });
+          } else {
+            showModal("Chyba", "Neplatné umiestnenie lode!");
+          }
+        } catch (error) {
+          showModal("Chyba", error.message);
+        }
+      }
+
+      async function setReady() {
+        if (myShips.length === 0) {
+          showModal("Chyba", "Umiestni aspoň jednu loď!");
+          return;
+        }
+
+        try {
+          await fetch(
+            `${API_URL}/games/${gameId}/players/${myPlayerId}/ready`,
+            {
+              method: "POST",
+            }
+          );
+
+          showSection("gameSection");
+          createGameBoards();
+          startGameLoop();
+        } catch (error) {
+          showModal("Chyba", error.message);
+        }
+      }
+
+      function createGameBoards() {
+        // Moja plocha
+        const myBoard = document.getElementById("myBoard");
+        myBoard.style.gridTemplateColumns = `repeat(${boardSize}, 40px)`;
+        myBoard.innerHTML = "";
+
+        for (let y = 0; y < boardSize; y++) {
+          for (let x = 0; x < boardSize; x++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+
+            // Zobraz lode
+            if (
+              myShips.some((ship) =>
+                ship.some((pos) => pos.x === x && pos.y === y)
+              )
+            ) {
+              cell.classList.add("ship");
+            }
+
+            myBoard.appendChild(cell);
+          }
+        }
+
+        // Protivníkova plocha
+        const enemyBoard = document.getElementById("enemyBoard");
+        enemyBoard.style.gridTemplateColumns = `repeat(${boardSize}, 40px)`;
+        enemyBoard.innerHTML = "";
+
+        for (let y = 0; y < boardSize; y++) {
+          for (let x = 0; x < boardSize; x++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.onclick = () => attack(x, y);
+            enemyBoard.appendChild(cell);
+          }
+        }
+      }
+
+      async function attack(x, y) {
+        if (!gameData || gameData.status !== "in_progress") return;
+        if (gameData.current_player_index !== 0) {
+          showModal("Info", "Nie je tvoj ťah!");
+          return;
+        }
+
+        try {
+          let url, body;
+
+          if (selectedSpell) {
+            url = `${API_URL}/games/${gameId}/spell?caster_id=${myPlayerId}&target_id=${enemyPlayerId}`;
+            body = {
+              spell_type: selectedSpell,
+              target_position: {x, y},
+            };
+          } else {
+            url = `${API_URL}/games/${gameId}/attack?attacker_id=${myPlayerId}&target_id=${enemyPlayerId}`;
+            body = {position: {x, y}};
+          }
+
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(body),
+          });
+
+          const result = await res.json();
+
+          // Aktualizuj UI
+          const enemyBoard = document.getElementById("enemyBoard");
+          result.affected_positions.forEach((pos) => {
+            const cell = enemyBoard.children[pos.y * boardSize + pos.x];
+            cell.classList.add(result.hit ? "hit" : "miss");
+          });
+
+          if (result.achievement_earned) {
+            showAchievement(result.achievement_earned);
+          }
+
+          if (result.sunk_ship) {
+            showModal("🎯 Potopil si loď!", `Potopil si ${result.sunk_ship}!`);
+          }
+
+          selectedSpell = null;
+          document
+            .querySelectorAll(".spell-btn")
+            .forEach((btn) => btn.classList.remove("active"));
+
+          await updateGameState();
+
+          // AI ťah
+          if (
+            gameData &&
+            gameData.status === "in_progress" &&
+            gameData.current_player_index === 1
+          ) {
+            setTimeout(aiTurn, 1000);
+          }
+        } catch (error) {
+          showModal("Chyba", error.message);
+        }
+      }
+
+      async function aiTurn() {
+        const x = Math.floor(Math.random() * boardSize);
+        const y = Math.floor(Math.random() * boardSize);
+
+        try {
+          await fetch(
+            `${API_URL}/games/${gameId}/attack?attacker_id=${enemyPlayerId}&target_id=${myPlayerId}`,
+            {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({position: {x, y}}),
+            }
+          );
+
+          await updateGameState();
+        } catch (error) {
+          console.error("AI turn error:", error);
+        }
+      }
+
+      async function updateGameState() {
+        try {
+          const res = await fetch(`${API_URL}/games/${gameId}`);
+          gameData = await res.json();
+
+          const myPlayer = gameData.players.find((p) => p.id === myPlayerId);
+          const enemyPlayer = gameData.players.find(
+            (p) => p.id === enemyPlayerId
+          );
+
+          if (myPlayer) {
+            document.getElementById("myShipsAlive").textContent =
+              myPlayer.ships.filter((s) => !s.is_sunk).length;
+            document.getElementById("consecutiveHits").textContent =
+              myPlayer.consecutive_hits;
+
+            // Aktualizuj moju plochu
+            const myBoard = document.getElementById("myBoard");
+            myPlayer.ships.forEach((ship) => {
+              ship.hits.forEach((hit) => {
+                const cell = myBoard.children[hit.y * boardSize + hit.x];
+                cell.classList.add("hit");
+              });
+            });
+          }
+
+          if (gameData.status === "finished") {
+            const winner =
+              gameData.winner_id === myPlayerId ? "Vyhral si!" : "Prehral si!";
+            document.getElementById("gameStatus").textContent = winner;
+            showModal("Koniec hry", winner);
+          } else if (gameData.current_player_index === 0) {
+            document.getElementById("gameStatus").textContent = "🎯 Tvoj ťah!";
+          } else {
+            document.getElementById("gameStatus").textContent =
+              "⏳ Ťah protivníka...";
+          }
+        } catch (error) {
+          console.error("Update error:", error);
+        }
+      }
+
+      function selectSpell(spellType) {
+        if (selectedSpell === spellType) {
+          selectedSpell = null;
+          document
+            .querySelectorAll(".spell-btn")
+            .forEach((btn) => btn.classList.remove("active"));
+        } else {
+          selectedSpell = spellType;
+          document
+            .querySelectorAll(".spell-btn")
+            .forEach((btn) => btn.classList.remove("active"));
+          event.target.classList.add("active");
+        }
+      }
+
+      function showAchievement(achievement) {
+        const container = document.getElementById("achievements");
+        const div = document.createElement("div");
+        div.className = "achievement";
+        div.textContent = `🏆 ${achievement.name}`;
+        container.appendChild(div);
+      }
+
+      async function startGameLoop() {
+        setInterval(updateGameState, 2000);
+      }
+    </script>
+  </body>
+</html>
