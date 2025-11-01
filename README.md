@@ -3,6 +3,13 @@
 Everything AI generated even this
 JS API = shit API
 
+#
+
+Try index.html
+
+- only for PY API
+- don't forget to change PORT
+
 # ⚓ Battleship Game API (Node.js)
 
 Local 2-player Battleship game API for hot-seat gaming.
