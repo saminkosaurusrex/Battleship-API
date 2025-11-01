@@ -251,7 +251,7 @@ Toto API je pre **hot-seat gaming** - dvaja hráči na jednom zariadení sa stri
 
 **Happy coding! ⚓🎮**
 
-# ⚓ Battleship Game API
+# ⚓ Battleship Game API(PY)
 
 REST API pre hru Battleship s vlastnými loďami, achievementami a kúzlami.
 
