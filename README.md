@@ -268,7 +268,7 @@ pip install fastapi uvicorn pydantic
 ### 2. Spusti server
 
 ```bash
-uvicorn battleship_api:app --reload
+uvicorn serverPy:app --reload
 ```
 
 ### 3. Otvor Swagger UI
