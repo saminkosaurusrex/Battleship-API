@@ -114,6 +114,9 @@ class PlaceShipRequest(BaseModel):
     ship_name: str
     positions: List[Position]
 
+class PlaceShipsRequest(BaseModel):
+    ships: List[PlaceShipRequest]
+
 class AttackRequest(BaseModel):
     position: Position
 
@@ -289,8 +292,8 @@ def join_game(game_id: str, request: JoinGameRequest):
     return player
 
 @app.post("/games/{game_id}/players/{player_id}/ships")
-def place_ship(game_id: str, player_id: str, request: PlaceShipRequest):
-    """Place a custom ship on the board"""
+def place_ships(game_id: str, player_id: str, request: PlaceShipsRequest):
+    """Place multiple ships on the board"""
     if game_id not in games:
         raise HTTPException(status_code=404, detail="Game not found")
     
@@ -303,14 +306,16 @@ def place_ship(game_id: str, player_id: str, request: PlaceShipRequest):
     if game.status != GameStatus.SETUP:
         raise HTTPException(status_code=400, detail="Cannot place ships after game started")
     
-    if not check_ship_placement(request.positions, player.ships, player.board_size):
-        raise HTTPException(status_code=400, detail="Invalid ship placement")
+    for ship_data in request.ships:
+        if not check_ship_placement(ship_data.positions, player.ships, player.board_size):
+            raise HTTPException(status_code=400, detail=f"Invalid placement for ship {ship_data.ship_name}")
+        
+        ship = Ship(name=ship_data.ship_name, positions=ship_data.positions)
+        player.ships.append(ship)
     
-    ship = Ship(name=request.ship_name, positions=request.positions)
-    player.ships.append(ship)
     update_board(player)
     
-    return {"message": "Ship placed successfully", "ship": ship}
+    return {"message": "Ships placed successfully", "ships": player.ships}
 
 @app.post("/games/{game_id}/players/{player_id}/ready")
 def set_player_ready(game_id: str, player_id: str):
